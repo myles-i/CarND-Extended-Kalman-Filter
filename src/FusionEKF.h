@@ -33,7 +33,8 @@ public:
 
 private:
   // check whether the tracking toolbox was initiallized or not (first measurement)
-  bool is_initialized_;
+  bool is_x_initialized_;
+  bool is_v_initialized_;
 
   // previous timestamp
   long previous_timestamp_;

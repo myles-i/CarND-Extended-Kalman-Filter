@@ -26,13 +26,14 @@ void KalmanFilter::Predict() {
   P_ = F_ * P_ * Ft + Q_;
 }
 
-void KalmanFilter::Update(const VectorXd &z, const VectorXd &z_pred) {
+void KalmanFilter::Update(const VectorXd &y) {
   /**
+
     * update the state by using Kalman Filter equations
-    z_pred from the ekf_ state is an input, which allows for nonlinear functions
-    to compute it outside of the kalman filter
+    The input y is the difference between the actual measurements and 
+    predicted measurements (y = z - z_pred) which allows for this to be computed
+    externally, but the kalman equations remain the same
   */
-  VectorXd y = z - z_pred;
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
