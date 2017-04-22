@@ -97,6 +97,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
                measurement_pack.raw_measurements_(1);
     }
     
+    //avoid initializing to exactly zero, as this does not make sense
+    if (x_init(0)<0.001){
+      x_init(0)=0.001;
+    }
+    if (x_init(1)<0.001){
+      x_init(1)=0.001;
+    }
     //Initialize velocity if position was already initialized
     if (is_x_initialized_){
       ekf_.x_(2) = (x_init(0) - ekf_.x_(0))/dt;
@@ -107,6 +114,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       ekf_.x_ = VectorXd(4);
       ekf_.x_ << 1, 1, 1, 1;
     }
+
+
 
     //(re-)initialize position
     ekf_.x_(0) = x_init(0);
@@ -121,23 +130,26 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   /*****************************************************************************
   *  Prediction
   ****************************************************************************/
-  float dt_2 = dt * dt;
-  float dt_3 = dt_2 * dt;
-  float dt_4 = dt_3 * dt;
+  if (dt >0.00001){// Do not predict if dt is smaller than epsilon
+    float dt_2 = dt * dt;
+    float dt_3 = dt_2 * dt;
+    float dt_4 = dt_3 * dt;
 
-  //Modify the F matrix so that the time is integrated
-  ekf_.F_(0, 2) = dt;
-  ekf_.F_(1, 3) = dt;
+    //Modify the F matrix so that the time is integrated
+    ekf_.F_(0, 2) = dt;
+    ekf_.F_(1, 3) = dt;
 
 
-  //set the process covariance matrix Q
-  ekf_.Q_ = MatrixXd(4, 4);
-  ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-       0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-       dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-       0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
 
-  ekf_.Predict();
+    //set the process covariance matrix Q
+    ekf_.Q_ = MatrixXd(4, 4);
+    ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
+         0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
+         dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
+         0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
+
+    ekf_.Predict();
+  }
 
   /*****************************************************************************
    *  Update
